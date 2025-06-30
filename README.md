@@ -38,7 +38,7 @@ Das Einfügen in den Schaltplan von QElectroTech geht wie folgt:
 *  zum Quelltexteditor von QET zurückwechseln und den Inhalt der Zwischenablage einfügen &lt;Strg&gt;+V
 *  Nach Schließen des Dialogs mit "OK" erscheint im Textfeld eine Tabelle mit den Klemmleisten.
 
-<br>
+<br><br><br>
 
 QET_Klemmenplan uses Arseny Kapoulkine's &quot;pugixml&quot; (https://github.com/zeux/pugixml)
 to handle the content of the Element-File. Thank you, Arseny! <br>
