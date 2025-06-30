@@ -177,35 +177,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-/*
-    // die Projekt-Infos ausgeben
-    std::cout << "---------------\n";
-    std::cout << "QET-Projekt   : " << ProjectProperties << std::endl;
-    std::cout << "---------------\n";
-*/
-
-
-//
-// Infos zum Sortieren mit C++:
-// https://dev.to/rajat_naegi/understanding-std-sort-especially-the-third-parameter-14k4
-//
-
-
-    // die Klemmen nach Label sortieren:
-//    std::sort(vKlemmen.begin(), vKlemmen.end(), []( const auto& lhs, const auto& rhs ) {
-//        return lhs.lbl < rhs.lbl;
-//    });
-
-
-// wir müssen mehrfach sortieren:
-// erst für den Teil vor dem Trennzeichen
-// und danach die Teilbereiche für den zweiten Teil
-// std::sort( vKlemmen.begin(), vKlemmen.begin()+<Anzahl Werte>, [](....
-// "natural sort" - Algorithmen aus separatem Programm ausprobieren!!!
-//
-// --> erst komplett mit "s1" und dann n-mal "s5"
-//
-    // wir sortieren zuerst nach "s1":
+    // wir sortieren zuerst nach Klemmleiste:
    	std::sort(vKlemmen.begin(), vKlemmen.end(),
 		[](const auto& lhs, const auto& rhs) {
              return left_trim(lhs.lbl) < left_trim(rhs.lbl);
@@ -222,9 +194,6 @@ int main(int argc, char **argv)
         vBlockStart.push_back(vKlemmen.size());
     }
 
-//std::cerr << "Block-Anfänge bei: ";
-//for (auto& n : vBlockStart) { std:: cerr << n << " "; }
-//std::cerr << "\n";
 
     // Die einzelnen Blöcke sortieren:
     for (size_t n=0; n < (vBlockStart.size()-1); n++) {
