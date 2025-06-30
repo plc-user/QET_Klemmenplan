@@ -12,7 +12,7 @@ QET_Klemmenplan Schaltplan.qet
 Eine Ausgabe-Umleitung in eine Datei funktioniert selbstverständlich auch: So kann die Ausgabe mit einem Editor noch angepasst werden, falls nötig:
 
 ```
-QET_Klemmenplan Schaltplan.qet &gt; Klemmen.txt
+QET_Klemmenplan Schaltplan.qet > Klemmen.txt
 ```
 
 Vollständige Liste der verfügbaren Optionen:
