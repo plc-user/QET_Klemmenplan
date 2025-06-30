@@ -12,7 +12,7 @@ QET_Klemmenplan Schaltplan.qet
 Eine Ausgabe-Umleitung in eine Datei funktioniert selbstverständlich auch: So kann die Ausgabe mit einem Editor noch angepasst werden, falls nötig:
 
 ```
-QET_Klemmenplan Schaltplan.qet > Klemmen.txt
+QET_Klemmenplan Schaltplan.qet &gt; Klemmen.txt
 ```
 
 Vollständige Liste der verfügbaren Optionen:
@@ -33,13 +33,14 @@ Das Einfügen in den Schaltplan von QElectroTech geht wie folgt:
 
 *  Im Schaltplaneditor von QElectroTech ein Textfeld anlegen.
 *  Textfeld markieren und "Fortgeschrittener Editor" aufrufen.
-*  TAB "Quelltext" öffnen, kompletten Inhalt auswählen <Strg>+A und löschen!
-*  Datei "Klemmen.txt" mit externem Texteditor öffnen, den kompletten Inhalt markieren <Strg>+A und in die Zwischenablage kopieren <Strg>+C
-*  zum Quelltexteditor von QET zurückwechseln und den Inhalt der Zwischenablage einfügen <Strg>+V
+*  TAB "Quelltext" öffnen, kompletten Inhalt auswählen &lt;Strg&gt;+A und löschen!
+*  Datei "Klemmen.txt" mit externem Texteditor öffnen, den kompletten Inhalt markieren &lt;Strg&gt;+A und in die Zwischenablage kopieren &lt;Strg&gt;+C
+*  zum Quelltexteditor von QET zurückwechseln und den Inhalt der Zwischenablage einfügen &lt;Strg&gt;+V
 *  Nach Schließen des Dialogs mit "OK" erscheint im Textfeld eine Tabelle mit den Klemmleisten.
 
+<br>
 
 QET_Klemmenplan uses Arseny Kapoulkine's &quot;pugixml&quot; (https://github.com/zeux/pugixml)
 to handle the content of the Element-File. Thank you, Arseny! <br>
- <br>
+<br>
 Many thanks, of course, to the developers and contributors of QElectroTech – a free software to create electric diagrams. (https://qelectrotech.org) <br>
