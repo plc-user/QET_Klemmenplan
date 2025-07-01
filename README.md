@@ -48,6 +48,6 @@ So sieht das dann zum Beispiel im Textfeld aus:
 <br>
 
 QET_Klemmenplan uses Arseny Kapoulkine's &quot;pugixml&quot; (https://github.com/zeux/pugixml)
-to handle the content of the Element-File. Thank you, Arseny! <br>
+to handle the content of the Diagram-File. Thank you, Arseny! <br>
 <br>
 Many thanks, of course, to the developers and contributors of QElectroTech – a free software to create electric diagrams. (https://qelectrotech.org) <br>
