@@ -89,7 +89,6 @@ int main(int argc, char **argv)
         result = doc.load(std::cin);
     } else {
         if ((QETFile != "") && (std::filesystem::exists(QETFile))) {
-          //ElementFile = argv[1];
           result = doc.load_file(QETFile.c_str());
         } else
         if ((argc>1)&&(std::filesystem::exists(argv[argc-1]))) {
@@ -119,7 +118,6 @@ int main(int argc, char **argv)
     for (pugi::xml_node dnode: node.children("diagram")) {
         Diagram TempDiagram;
         TempDiagram.ReadFromNode(dnode);
-        //std::cout << "Diagram-Eigenschaften: " << TempDiagram << std::endl;
         vDiagrams.push_back(TempDiagram);
         // Elemente des Diagramms in einer Schleife lesen:
         for (pugi::xml_node enode: dnode.child("elements").children("element")) {
@@ -135,10 +133,8 @@ int main(int argc, char **argv)
                 TempKlemme.row = enode.attribute("y").as_uint() / TempDiagram.uiRowSize + 1;
                 // die dynamischen Texte durchgehen und das Label finden:
                 for (pugi::xml_node dtnode: enode.child("dynamic_texts").children("dynamic_elmt_text")) {
-                    //std::cout << "--> dynamic_elmt_text\n";
                     if (std::string(dtnode.child_value("info_name")) == "label") {
                         TempKlemme.lbl = dtnode.child_value("text");
-                        //std::cout << "--> found label\n";
                     }
                 }
                 // die Anschlüsse der Klemme zuordnen:
@@ -147,16 +143,18 @@ int main(int argc, char **argv)
                     Anschluss.uiNummer = knode.attribute("id").as_uint();
                     // pro Anschluss das diagram durchgehen und potenzial und funktion der Leiter bestimmen:
                     for (pugi::xml_node cnode: dnode.child("conductors").children("conductor")) {
-                        //std::cout << "conductor: " << cnode.attribute("element1").value() << "\n";
                         if ((TempKlemme.uuid == std::string(cnode.attribute("element1").value())) ||
                             (cnode.attribute("element2").value() == TempKlemme.uuid)) {
-                            //std::cout << "found UUID\n";
                             Anschluss.sFunktion    = cnode.attribute("function").value();
                             Anschluss.sText        = cnode.attribute("num").value();
                             Anschluss.sProtokoll   = cnode.attribute("tension_protocol").value();
                             Anschluss.sQuerschnitt = cnode.attribute("conductor_section").value();
                             Anschluss.sFarbe       = cnode.attribute("conductor_color").value();
                             Anschluss.sKabel       = cnode.attribute("cable").value();
+                            // leere Zellen werden bei nachträglichem Editieren anders formatiert --> Leerzeichen einfügen!
+                            if (Anschluss.sFunktion.empty())  { Anschluss.sFunktion = "&nbsp;"; }
+                            if (Anschluss.sText.empty())      { Anschluss.sText = "&nbsp;"; }
+                            if (Anschluss.sProtokoll.empty()) { Anschluss.sProtokoll = "&nbsp;"; }
                         }
                     } // Conductors des Diagramms eingelesen
                     TempKlemme.vAnschluss.push_back(Anschluss);
@@ -164,7 +162,6 @@ int main(int argc, char **argv)
                 if ((xOnlyWithLabel == true) && (TempKlemme.lbl == "")) {
                     ; // ich soll keine "leeren" Klemmen speichern...
                 } else {
-                    //std::cout << TempKlemme << "\n";
                     vKlemmen.push_back(TempKlemme);
                 }
             } // "properties" der Klemme gelesen
@@ -197,7 +194,6 @@ int main(int argc, char **argv)
 
     // Die einzelnen Blöcke sortieren:
     for (size_t n=0; n < (vBlockStart.size()-1); n++) {
-        //std::cerr << "sortiere Klemmen " << vBlockStart[n] << " .. " << vBlockStart[n+1]-1 << "\n";
         std::sort(vKlemmen.begin()+vBlockStart[n], vKlemmen.begin()+vBlockStart[n+1],
                 [](const auto& lhs, const auto& rhs) { return zero_padding(lhs.lbl) < zero_padding(rhs.lbl); });
     }
@@ -212,21 +208,25 @@ int main(int argc, char **argv)
         for (size_t i = 0; i < vKlemmen.size(); i++) {
             // HTML-Ausgabe einer Tabellenzeile:
             std::cout << "  <tr>";
+            std::cout << (xAddNumberCol  ? sTDrtext(std::to_string(++uiNumber))                   : ""); //<< "Text: "
             std::cout << sTDtbold(vKlemmen[i].lbl); //<< "Label: "
             std::cout << sTDtext(std::to_string(vKlemmen[i].folio) + "-"
                                  + NumberToLetters(vKlemmen[i].row)
                                  + std::to_string(vKlemmen[i].col)); //<< "Position: "
-            std::cout << sTDctext("&nbsp;") << sTDctext("&nbsp;") << sTDctext("&nbsp;") << sTDctext("&nbsp;"); //<< "Brücker: "
-            std::cout << sTDtext(vKlemmen[i].vAnschluss[0].sFunktion); //<< "Funktion: "
-            std::cout << sTDtext(vKlemmen[i].vAnschluss[0].sText); //<< "Text: "
-            std::cout << sTDtext(vKlemmen[i].vAnschluss[0].sProtokoll); //<< "Protokoll: "
-            std::cout << (xAddCommentCol ? sTDtext("") : ""); // Kommentar nur auf Anfrage
+            if (xAddJumpers == true) {
+                std::cout << sTDctext("&nbsp;") << sTDctext("&nbsp;") << sTDctext("&nbsp;") << sTDctext("&nbsp;"); //<< "Brücker: "
+            }
+            std::cout << (xAddFunction   ? sTDtext(vKlemmen[i].vAnschluss[0].sFunktion)           : ""); //<< "Funktion: "
+            std::cout << (xAddText       ? sTDtext(vKlemmen[i].vAnschluss[0].sText)               : ""); //<< "Text: "
+            std::cout << (xAddProtocol   ? sTDtext(vKlemmen[i].vAnschluss[0].sProtokoll)          : ""); //<< "Protokoll: "
+            std::cout << (xAddCommentCol ? sTDtext("&nbsp;")                                      : ""); // Kommentar nur auf Anfrage
             std::cout << "</tr>\n"; // Ende der Tabellenzeile
-            // ENDE - HTML-Ausgabe
+            // ENDE - HTML-Ausgabe einer Tabellenzeile
 
             // gibt es weitere Klemmen und ist das ein neuer Block?
             // Dann hier eine neue Tabelle anfangen lassen!
             if ((i < (vKlemmen.size()-1)) && (LeftOfInterpunct(vKlemmen[i].lbl) != LeftOfInterpunct(vKlemmen[i+1].lbl))) {
+                uiNumber = 0;
                 std::cout << sStartNewTable() << "\n";
             }
         }

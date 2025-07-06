@@ -58,13 +58,13 @@ void Property::ReadProperties(const pugi::xml_node node){
 //--- START - implementation of Diagram in qet-file ----------------------------
 //
 void Diagram::ReadFromNode(const pugi::xml_node node){
-    sAuthor   = node.attribute("author").value();
-    sDate     = node.attribute("date").value();
-    sIndexrev = node.attribute("indexrev").value();
-    sLocmach  = node.attribute("locmach").value();
+    sAuthor   = node.attribute("author").as_string();
+    sDate     = node.attribute("date").as_string();
+    sIndexrev = node.attribute("indexrev").as_string();
+    sLocmach  = node.attribute("locmach").as_string();
     uiOrder   = node.attribute("order").as_uint();
-    sPlant    = node.attribute("plant").value();
-    sTitle    = node.attribute("title").value();
+    sPlant    = node.attribute("plant").as_string();
+    sTitle    = node.attribute("title").as_string();
     uiCols    = node.attribute("cols").as_uint();
     uiColSize = node.attribute("colsize").as_uint();
     uiRows    = node.attribute("rows").as_uint();

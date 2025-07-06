@@ -45,7 +45,7 @@
 // global variables
 // ============================================================================
 
-const std::string sVersion = "v0.0.1beta2";
+const std::string sVersion = "v0.0.1beta3";
 
 // the qet-file to process:
 static std::string QETFile      = "";
@@ -53,11 +53,18 @@ static std::string QETFile      = "";
 // we need a "Pugi-Node":
 static pugi::xml_node node;
 
+static size_t uiNumber = 0;
+
 // some Bits for control
 static bool xPrintHelp          = false;
 static bool xReadFromStdIn      = false;
 static bool xOnlyWithLabel      = false;
 static bool xAddCommentCol      = false;
+static bool xAddNumberCol       = false;
+static bool xAddJumpers         = true;
+static bool xAddFunction        = true;
+static bool xAddText            = true;
+static bool xAddProtocol        = true;
 static bool xStopWithError      = false;
 
 
@@ -78,7 +85,12 @@ th {\n\
     text-align: left;\n\
 }\n\
 .ctext {\n\
-    align: center;\n\
+    text-align: center;\n\
+    valign: middle;\n\
+    font-weight: normal;\n\
+}\n\
+.rtext {\n\
+    text-align: right;\n\
     valign: middle;\n\
     font-weight: normal;\n\
 }\n\
@@ -97,24 +109,25 @@ th {\n\
 }\n\
 </style>";
 
-//std::string sTableHeader = "<table border=\"1\" cellspacing=\"0\" cellpadding=\"0\">";
-std::string sTDctext (std::string s) { return "<td class=\"ctext\">" + s + "</td>"; }
-std::string sTDtext  (std::string s) { return "<td class=\"text\">"  + s + "</td>"; }
-std::string sTDtbold (std::string s) { return "<td class=\"tbold\">" + s + "</td>"; }
+std::string sTDctext (std::string s) { return "<td class=\"ctext\">"               + s + "</td>"; }
+std::string sTDrtext (std::string s) { return "<td class=\"rtext\">"               + s + "</td>"; }
+std::string sTDtext  (std::string s) { return "<td class=\"text\">"                + s + "</td>"; }
+std::string sTDtbold (std::string s) { return "<td class=\"tbold\">"               + s + "</td>"; }
+std::string sTDtbcs2 (std::string s) { return "<td class=\"tbold\" colspan=\"2\">" + s + "</td>"; }
 std::string sTDtbcs4 (std::string s) { return "<td class=\"tbold\" colspan=\"4\">" + s + "</td>"; }
-std::string sTDpos   (std::string s) { return "<td class=\"pos\">"   + s + "</td>"; }
+std::string sTDpos   (std::string s) { return "<td class=\"pos\">"                 + s + "</td>"; }
 
 std::string sTableHeader(void){
     return
         "<table border=\"1\" cellspacing=\"0\" cellpadding=\"0\">\n"
         + std::string("  <tr>")
-        + sTDtbold("")          // Name der Klemmleiste
+        + (xAddNumberCol  ? sTDtbcs2("")         : sTDtbold("")) // Name der Klemmleiste
         + sTDtbold("Position")
-        + sTDtbcs4("Jumper")
-        + sTDtbold("Function")
-        + sTDtbold("Text")
-        + sTDtbold("Protocol")
-        + (xAddCommentCol ? sTDtbold("Comment") : "")
+        + (xAddJumpers    ? sTDtbcs4("Jumpers")  : "")
+        + (xAddFunction   ? sTDtbold("Function") : "")
+        + (xAddText       ? sTDtbold("Text")     : "")
+        + (xAddProtocol   ? sTDtbold("Protocol") : "")
+        + (xAddCommentCol ? sTDtbold("Comment")  : "")
         + "</tr>";
 }
 
@@ -136,7 +149,7 @@ std::string sStartNewTable(void) {
 int parseCommandline(int argc, char *argv[]);
 void PrintHelp(const std::string &s, const std::string &v);
 
-static const char cOptions[] = "cf:hlio";
+static const char cOptions[] = "cf:hlnio";
 
 // the possible Commandlineparameters:
 static struct option long_options[]={
@@ -144,7 +157,12 @@ static struct option long_options[]={
     {"file",required_argument,nullptr,'f'},
     {"help",no_argument,nullptr,'h'},
     {"label",no_argument,nullptr,'l'},
+    {"number",no_argument,nullptr,'n'},
     {"stdin",no_argument,nullptr,'i'},
+    {"NoJumpers",no_argument,nullptr,1000},   // "long-opt" only!!!
+    {"NoFunction",no_argument,nullptr,1001},  // "long-opt" only!!!
+    {"NoProtocol",no_argument,nullptr,1002},  // "long-opt" only!!!
+    {"NoText",no_argument,nullptr,1003},      // "long-opt" only!!!
     {0,0,0,0}
   };
 
@@ -166,6 +184,26 @@ int parseCommandline(int argc, char *argv[]) {
                         std::cerr << "(long_options[option_index].flag != 0)\n";
                     break;
                 }
+            case 1000:
+                if (_DEBUG_)
+                    std::cerr << "No Jumper-Columns in table\n";
+                xAddJumpers = false;
+                break;
+            case 1001:
+                if (_DEBUG_)
+                    std::cerr << "No Function-Column in table\n";
+                xAddFunction = false;
+                break;
+            case 1002:
+                if (_DEBUG_)
+                    std::cerr << "No Protocol-Column in table\n";
+                xAddProtocol = false;
+                break;
+            case 1003:
+                if (_DEBUG_)
+                    std::cerr << "No Text-Column in table\n";
+                xAddText = false;
+                break;
             case 'c':
                 if (_DEBUG_)
                     std::cerr << "Add Comment-Column to table\n";
@@ -185,6 +223,11 @@ int parseCommandline(int argc, char *argv[]) {
                 if (_DEBUG_)
                     std::cerr << "Output only terminals with label\n";
                 xOnlyWithLabel = true;
+                break;
+            case 'n':
+                if (_DEBUG_)
+                    std::cerr << "Add column \"consecutive number\" to table\n";
+                xAddNumberCol = true;
                 break;
             case 'f':
                 if (_DEBUG_)
@@ -226,15 +269,20 @@ void PrintHelp(const std::string &s, const std::string &v){
     << "usage:" << std::endl
     << sExeName << "  [options]  FILENAME" << std::endl
     << std::endl
-    << "   -i | --stdin     input-data is read from stdin, a given\n"
-    << "                    filename is ignored                   \n"
-    << "   -f FILENAME      or                                    \n"
-    << "   --file FILENAME  the file that will be used            \n"
-    << "   -c | --comment   add comment-column to table           \n"
-    << "   -l | --label     only add terminals with label         \n"
-    << "   -h | --help      show this help                        \n"
+    << "   -i | --stdin     input-data is read from stdin,     \n"
+    << "                    a given filename is ignored        \n"
+    << "   -f FILENAME      or                                 \n"
+    << "   --file FILENAME  the file that will be used         \n"
+    << "   -c | --comment   add comment-column to table        \n"
+    << "   -l | --label     only add terminals with label      \n"
+    << "   -n | --number    add column with consecutive number \n"
+    << "   --NoJumpers      suppress jumper-columns            \n"
+    << "   --NoFunction     suppress function-column           \n"
+    << "   --NoText         suppress text-column               \n"
+    << "   --NoProtocol     suppress protocol-column           \n"
+    << "   -h | --help      show this help                     \n"
     << std::endl
-    << "As always with free software: Use it at your own risk!  \n\n";
+    << "As always with free software: Use it at your own risk!\n\n";
 }
 /******************************************************************************/
 

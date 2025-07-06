@@ -20,12 +20,17 @@ Vollständige Liste der verfügbaren Optionen:
 usage:
 "QET_Klemmenplan"  [options]  FILENAME
 
-   -i | --stdin     input-data is read from stdin, a given
-                    filename is ignored
+   -i | --stdin     input-data is read from stdin,
+                    a given filename is ignored
    -f FILENAME      or
    --file FILENAME  the file that will be used
    -c | --comment   add comment-column to table
    -l | --label     only add terminals with label
+   -n | --number    add column with consecutive number
+   --NoJumpers      suppress jumper-columns
+   --NoFunction     suppress function-column
+   --NoText         suppress text-column
+   --NoProtocol     suppress protocol-column
    -h | --help      show this help
 ```
 
@@ -43,6 +48,14 @@ Das Einfügen in den Schaltplan von QElectroTech geht wie folgt:
 
 So sieht das dann zum Beispiel im Textfeld aus:
 <img src=beispiel.png>
+<br>
+
+Anmerkung:<br>
+Damit QET_Klemmenplan die Leitereigenschaften &quot;Function&quot;, &quot;Text&quot; und &quot;Protocol&quot;
+den Klemmen zuordnen kann, müssen die verwendeten Elemente mit einer QET-Version erstellt bzw. bearbeitet
+sein, die den Anschlüssen UUIDs zugewiesen hat! Dies ist mit aktuellen QET 0.100-dev&nbsp;- Versionen und
+den Elementen der offiziellen Sammlung der Fall.
+
 <br>
 
 <br>
