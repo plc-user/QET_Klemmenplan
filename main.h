@@ -45,7 +45,7 @@
 // global variables
 // ============================================================================
 
-const std::string sVersion = "v0.0.1beta3";
+const std::string sVersion = "v0.0.1";
 
 // the qet-file to process:
 static std::string QETFile      = "";

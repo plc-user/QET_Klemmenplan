@@ -122,7 +122,7 @@ int main(int argc, char **argv)
         // Elemente des Diagramms in einer Schleife lesen:
         for (pugi::xml_node enode: dnode.child("elements").children("element")) {
             // alle Klemmen separat speichern:
-            if (enode.child("properties")) {
+            if (enode.child("properties").child("element_type") && enode.child("terminals").child("terminal")) {
                 Klemme TempKlemme;
                 TempKlemme.uuid = enode.attribute("uuid").as_string();
                 TempKlemme.folio = TempDiagram.GetOrder();
@@ -180,7 +180,7 @@ int main(int argc, char **argv)
              return left_trim(lhs.lbl) < left_trim(rhs.lbl);
              });
 
-    // die Anfänge einer neuen Klemme finden:
+    // die Anfänge einer neuen Klemmleiste finden:
     std::vector<size_t> vBlockStart;
     if (vKlemmen.size() > 1) {
         vBlockStart.push_back(0);
