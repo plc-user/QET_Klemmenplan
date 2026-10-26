@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 plc-user
+ * Copyright (c) 2025-2026 plc-user
  *
  * It is NOT allowed to use this software or any of the
  * associated files as sample data for the purposes of
@@ -202,23 +202,30 @@ int main(int argc, char **argv)
 
     if (vKlemmen.size() > 0) {
         // alle Klemmen sortiert ausgeben:
+        if (xAddHtmlTags == true)
+            std::cout << "<html>\n<head>\n";
         std::cout << sCSSstyle    << "\n\n";
         // Tabellen-Header und Spalten-Überschriften:
+        if (xAddHtmlTags == true)
+            std::cout << "</head>\n<body>\n";
         std::cout << sTableHeader() << "\n";
         for (size_t i = 0; i < vKlemmen.size(); i++) {
             // HTML-Ausgabe einer Tabellenzeile:
             std::cout << "  <tr>";
             std::cout << (xAddNumberCol  ? sTDrtext(std::to_string(++uiNumber))                   : ""); //<< "Text: "
             std::cout << sTDtbold(vKlemmen[i].lbl); //<< "Label: "
+            if (xAddPosition == true) {
             std::cout << sTDtext(std::to_string(vKlemmen[i].folio) + "-"
                                  + NumberToLetters(vKlemmen[i].row)
                                  + std::to_string(vKlemmen[i].col)); //<< "Position: "
+            }
             if (xAddJumpers == true) {
                 std::cout << sTDctext("&nbsp;") << sTDctext("&nbsp;") << sTDctext("&nbsp;") << sTDctext("&nbsp;"); //<< "Brücker: "
             }
             std::cout << (xAddFunction   ? sTDtext(vKlemmen[i].vAnschluss[0].sFunktion)           : ""); //<< "Funktion: "
             std::cout << (xAddText       ? sTDtext(vKlemmen[i].vAnschluss[0].sText)               : ""); //<< "Text: "
             std::cout << (xAddProtocol   ? sTDtext(vKlemmen[i].vAnschluss[0].sProtokoll)          : ""); //<< "Protokoll: "
+            std::cout << (xAddCol        ? sTDtext("&nbsp;")                                      : ""); //<< "custom column "
             std::cout << (xAddCommentCol ? sTDtext("&nbsp;")                                      : ""); // Kommentar nur auf Anfrage
             std::cout << "</tr>\n"; // Ende der Tabellenzeile
             // ENDE - HTML-Ausgabe einer Tabellenzeile
@@ -231,6 +238,8 @@ int main(int argc, char **argv)
             }
         }
         std::cout << sTableFooter << "\n";
+        if (xAddHtmlTags == true)
+            std::cout << "</body>\n</html>\n";
     } else {
         std::cout << "* * * no terminals found * * *\n";
     }

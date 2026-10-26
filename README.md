@@ -27,10 +27,14 @@ usage:
    -c | --comment   add comment-column to table
    -l | --label     only add terminals with label
    -n | --number    add column with consecutive number
+   --NoPosition     suppress position-columns
    --NoJumpers      suppress jumper-columns
    --NoFunction     suppress function-column
    --NoText         suppress text-column
    --NoProtocol     suppress protocol-column
+   --AddHtmlTags    add HTML-Tags (preview in browser)
+                    Do NOT copy tags to qet-project!
+   --AddCol "text"  add custom column "text" to table
    -h | --help      show this help
 ```
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 plc-user
+ * Copyright (c) 2025-2026 plc-user
  *
  * It is NOT allowed to use this software or any of the
  * associated files as sample data for the purposes of
@@ -45,7 +45,7 @@
 // global variables
 // ============================================================================
 
-const std::string sVersion = "v0.0.1";
+const std::string sVersion = "v0.0.2";
 
 // the qet-file to process:
 static std::string QETFile      = "";
@@ -56,23 +56,29 @@ static pugi::xml_node node;
 static size_t uiNumber = 0;
 
 // some Bits for control
-static bool xPrintHelp          = false;
-static bool xReadFromStdIn      = false;
-static bool xOnlyWithLabel      = false;
-static bool xAddCommentCol      = false;
-static bool xAddNumberCol       = false;
-static bool xAddJumpers         = true;
-static bool xAddFunction        = true;
-static bool xAddText            = true;
-static bool xAddProtocol        = true;
-static bool xStopWithError      = false;
+static bool xPrintHelp           = false;
+static bool xReadFromStdIn       = false;
+static bool xOnlyWithLabel       = false;
+static bool xAddCommentCol       = false;
+static bool xAddNumberCol        = false;
+static bool xAddPosition         = true;
+static bool xAddJumpers          = true;
+static bool xAddFunction         = true;
+static bool xAddText             = true;
+static bool xAddProtocol         = true;
+static bool xAddHtmlTags         = false;
+static bool xAddCol              = false;
+static bool xStopWithError       = false;
 
+static std::string sCustomColumn = "";
+static const uint8_t cMaxColLen  = 24;
 
 //
 // variables + functions for HTML-output
 //
-std::string sCSSstyle = "<style type=\"text/css\">\n\
+const std::string sCSSstyle = "<style type=\"text/css\">\n\
 table {\n\
+    font-family: liberation-sans, sans-serif;\n\
     font-size: 9pt;\n\
 }\n\
 td {\n\
@@ -117,23 +123,24 @@ std::string sTDtbcs2 (std::string s) { return "<td class=\"tbold\" colspan=\"2\"
 std::string sTDtbcs4 (std::string s) { return "<td class=\"tbold\" colspan=\"4\">" + s + "</td>"; }
 std::string sTDpos   (std::string s) { return "<td class=\"pos\">"                 + s + "</td>"; }
 
-std::string sTableHeader(void){
+const std::string sTableHeader(void){
     return
         "<table border=\"1\" cellspacing=\"0\" cellpadding=\"0\">\n"
         + std::string("  <tr>")
-        + (xAddNumberCol  ? sTDtbcs2("")         : sTDtbold("")) // Name der Klemmleiste
-        + sTDtbold("Position")
-        + (xAddJumpers    ? sTDtbcs4("Jumpers")  : "")
-        + (xAddFunction   ? sTDtbold("Function") : "")
-        + (xAddText       ? sTDtbold("Text")     : "")
-        + (xAddProtocol   ? sTDtbold("Protocol") : "")
-        + (xAddCommentCol ? sTDtbold("Comment")  : "")
+        + (xAddNumberCol  ? sTDtbcs2("")            : sTDtbold("")) // Name der Klemmleiste
+        + (xAddPosition   ? sTDtbold("Position")    : "")
+        + (xAddJumpers    ? sTDtbcs4("Jumpers")     : "")
+        + (xAddFunction   ? sTDtbold("Function")    : "")
+        + (xAddText       ? sTDtbold("Text")        : "")
+        + (xAddProtocol   ? sTDtbold("Protocol")    : "")
+        + (xAddCol        ? sTDtbold(sCustomColumn) : "")
+        + (xAddCommentCol ? sTDtbold("Comment")     : "")
         + "</tr>";
 }
 
-std::string sTableFooter = "</table>";
+const std::string sTableFooter = "</table>";
 
-std::string sStartNewTable(void) {
+const std::string sStartNewTable(void) {
     return sTableFooter + "\n\n<br>\n\n"
          + sTableHeader();
 }
@@ -151,6 +158,15 @@ void PrintHelp(const std::string &s, const std::string &v);
 
 static const char cOptions[] = "cf:hlnio";
 
+enum eLongOpt {
+    eNoFunction = 1000,
+    eNoJumpers,
+    eNoText,
+    eNoProtocol,
+    eNoPosition,
+    eAddHtmlTags,
+    eAddCol};
+
 // the possible Commandlineparameters:
 static struct option long_options[]={
     {"comment",no_argument,nullptr,'c'},
@@ -159,10 +175,13 @@ static struct option long_options[]={
     {"label",no_argument,nullptr,'l'},
     {"number",no_argument,nullptr,'n'},
     {"stdin",no_argument,nullptr,'i'},
-    {"NoJumpers",no_argument,nullptr,1000},   // "long-opt" only!!!
-    {"NoFunction",no_argument,nullptr,1001},  // "long-opt" only!!!
-    {"NoProtocol",no_argument,nullptr,1002},  // "long-opt" only!!!
-    {"NoText",no_argument,nullptr,1003},      // "long-opt" only!!!
+    {"NoPosition",no_argument,nullptr,eNoPosition},   // "long-opt" only!!!
+    {"NoJumpers",no_argument,nullptr,eNoJumpers},     // "long-opt" only!!!
+    {"NoFunction",no_argument,nullptr,eNoFunction},   // "long-opt" only!!!
+    {"NoProtocol",no_argument,nullptr,eNoProtocol},   // "long-opt" only!!!
+    {"NoText",no_argument,nullptr,eNoText},           // "long-opt" only!!!
+    {"AddCol",required_argument,nullptr,eAddCol},     // "long-opt" only!!!
+    {"AddHtmlTags",no_argument,nullptr,eAddHtmlTags}, // "long-opt" only!!!
     {0,0,0,0}
   };
 
@@ -173,7 +192,7 @@ static struct option long_options[]={
 /******************************************************************************/
 int parseCommandline(int argc, char *argv[]) {
     int c;
-    int option_index = 12345;
+    int option_index = 0;
     std::string sTmp = "";
     while ((c=getopt_long(argc,argv,cOptions,long_options,&option_index))!=-1) {
         if (_DEBUG_) std::cerr << "long-opt-name: " << long_options[option_index].name << std::endl;
@@ -184,25 +203,44 @@ int parseCommandline(int argc, char *argv[]) {
                         std::cerr << "(long_options[option_index].flag != 0)\n";
                     break;
                 }
-            case 1000:
+            case eNoPosition:
+                if (_DEBUG_)
+                    std::cerr << "No Position-Column in table\n";
+                xAddPosition = false;
+                break;
+            case eNoJumpers:
                 if (_DEBUG_)
                     std::cerr << "No Jumper-Columns in table\n";
                 xAddJumpers = false;
                 break;
-            case 1001:
+            case eNoFunction:
                 if (_DEBUG_)
                     std::cerr << "No Function-Column in table\n";
                 xAddFunction = false;
                 break;
-            case 1002:
+            case eNoProtocol:
                 if (_DEBUG_)
                     std::cerr << "No Protocol-Column in table\n";
                 xAddProtocol = false;
                 break;
-            case 1003:
+            case eNoText:
                 if (_DEBUG_)
                     std::cerr << "No Text-Column in table\n";
                 xAddText = false;
+                break;
+            case eAddHtmlTags:
+                if (_DEBUG_)
+                    std::cerr << "Add HTML-Tags for preview in Browser\n";
+                xAddHtmlTags = true;
+                break;
+            case eAddCol:
+                sCustomColumn = optarg;
+                if (sCustomColumn.length() > cMaxColLen) {
+                    sCustomColumn.erase(cMaxColLen, sCustomColumn.length() - cMaxColLen);
+                }
+                if (_DEBUG_)
+                    std::cerr << "Add user-specific column \"" << sCustomColumn << "\" to table\n";
+                xAddCol = true;
                 break;
             case 'c':
                 if (_DEBUG_)
@@ -276,10 +314,14 @@ void PrintHelp(const std::string &s, const std::string &v){
     << "   -c | --comment   add comment-column to table        \n"
     << "   -l | --label     only add terminals with label      \n"
     << "   -n | --number    add column with consecutive number \n"
+    << "   --NoPosition     suppress position-columns          \n"
     << "   --NoJumpers      suppress jumper-columns            \n"
     << "   --NoFunction     suppress function-column           \n"
     << "   --NoText         suppress text-column               \n"
     << "   --NoProtocol     suppress protocol-column           \n"
+    << "   --AddHtmlTags    add HTML-Tags (preview in browser) \n"
+    << "                    Do NOT copy tags to qet-project!   \n"
+    << "   --AddCol \"text\"  add custom column \"text\" to table \n"
     << "   -h | --help      show this help                     \n"
     << std::endl
     << "As always with free software: Use it at your own risk!\n\n";
